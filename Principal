@@ -1,0 +1,148 @@
+from tkinter import *
+import random
+import datetime
+import time
+import requests;
+import tkinter as tk
+from uclcoin import KeyPair, Transaction, Block
+#================================= URL ======================================
+
+#URL'S DAS PAGINAS WEB PARA PEGAR AS INFORMAÇÕES ,COMO SALDO E INDEX DO BLOCO
+
+url = 'https://moeda.ucl.br'
+
+urlsite='https://moeda.ucl.br/block/last'
+
+sitesaldo='https://moeda.ucl.br/balance/03be8361b54299e55e81ca4dfa346896a54791b19eebd375000f51fb9b0a958ce4'
+
+#========================= CRIAÇÃO DA JANELA DE INTERFACE ===================
+
+#INSTANCIAR PARA QUE O OBJETO JANELA SEJA DO TIPO TK
+
+janela=Tk()
+
+#TAMANHO DA JANELA
+
+janela.geometry("1300x675+0+0")
+''
+
+#TITULO DA JANELA
+janela.title("MINERADOR")
+''
+
+#COR DE FUNDO/TEMA DA JANELA
+janela.configure(background='DarkGoldenrod')
+Tops=Frame (janela, width=1000 , height=75 ,bd=9 ,relief="raise")
+
+Tops=Frame (janela, width=1000 , height=75 ,bd=9 ,relief="raise")
+Tops.pack(side=TOP)
+
+
+#Tops=Frame (janela, width=1000 , height=75 ,bd=9 ,relief="raise")
+#Tops.pack(side=LEFT)
+
+#Tops=Frame (janela, width=1000 , height=75 ,bd=9 ,relief="raise")
+#Tops.pack(side=RIGHT)
+
+#CABEÇALHO DA JANELA
+labelinfo=Label(Tops,font=('arial',50,'bold'),text="Minerador - UCL",bd=8,width=30)
+labelinfo.grid(row=0,column=0)
+
+
+#===========================FUNÇÃO DE INICIAR A MINERAÇÃO========================
+
+#FUNÇÃO DE EXECUTAR O BOTÃO DE START NA MINERAÇÃO
+def botaoclick():
+    
+    #AO INICIAR A MINERAÇÃO ELE EXIBE A SEGUINTE MENSAGEM INFORMANDOAO USUARIO QUE A MINERAÇÃO COMEÇOU
+    print("INICIANDO NOVO BLOCO")
+
+    #LABEL DE INFORMAR O INICIO DA MINERAÇÃO
+    lb["text"] = "Mineração Ativada"
+
+    #FUNÇAO PRINCIPAL DE MINERAÇÃO
+    def opcMineracao(chave):
+
+        #LOOP PARA FICAR MINERANDO ATE GANHAR O BLOCO, OU ALGUEM PEGA-LO
+        while 1==1:
+            res = requests.get(f'{url}/block/minable/{chave}');
+            res = res.json();
+            dificuldade = res['difficulty'];
+            block = res['block'];    
+            block = Block.from_dict(block);
+            cont=0
+            
+            #/////NÃO ESTA SENDO USADO////////print('INICIANDO NOVO BLOCO');
+            
+            while block.current_hash[:dificuldade].count('0') < dificuldade:
+                
+             #AQUI SE INSTANCIAR O CONTADOR QUE IRA VERIFICAR SE O BLOCO FOI OU NÃO MINERADO
+             cont=cont+1
+             block.nonce += 1;
+             block.recalculate_hash();
+             
+             #O CONTADOR FICARA INDO DE 0 A 15 E VERIFICANDO SE O BLOCO ATUAL JA FOI MINERADO
+             if cont ==15:
+              miner = requests.get(f'{urlsite}');
+              miner = miner.json();
+              complexidade = miner["index"];
+              
+             #SE ALGUEM JA TIVER MINERADO ELE PASSA PARA O BLOCO SEGUINTE
+             if complexidade==block.index:
+                 break
+             #O CONTADOR VOLTA PARA 0 E TUDO ACONTECE NOVAMENTE  
+             cont=0
+             
+        #ESTA MENSAGEM E EXIBIDA AO FIM DA MINERAÇÃO DO BLOCO,INFORMANDO QUE AQUELE BLOCO JA FOI FINALIZADO   
+        print('MINERAÇÃO FINALIZADA');
+
+        #AO FINAL DO BLOCO ELE IRA EXIBIR O MEU SALDO ATUAL E A MINHA CHAVE PUBLICA
+        res = requests.post(f'{url}/block', json = dict(block));
+
+        #REQUISIÇÕES DO ARQUIVO  JSON PARA PEGAR MEU SALDO COM A VARIAVEL "BALANCE" 
+        res = requests.get(f'{url}/balance/{chave}');
+        res = res.json();
+        balanco = res['balance'];
+
+        #AQUI ACONTECE A EXIBIÇÃO DAS INFORMAÇÕES QUE EU CITEI ACIMA,MEU SALDO E CHAVE PUBLICA
+        print(chave, '\n', balanco);
+
+        #FIM DA FUNÇÃO DE MINERAÇAO
+        opcMineracao(chave);
+
+    #///////////////NÃO ESTOU USANDO /////////opcMineracao('03be8361b54299e55e81ca4dfa346896a54791b19eebd375000f51fb9b0a958ce4');
+
+#CRIAÇÃO E DEFINIÇÃO DO BOTÃO DE INICIAR A MINERAÇAO
+botao=Button(janela, width=20, text="INICIAR MINERAÇÃO",command=botaoclick,height=2, font="Arial, 14",bg='LightGoldenrod',activebackground='Yellow')
+botao.place(x=570,y=200)
+
+
+#=============== FUNÇAO DE "SAIR" =================
+#ISSO FAZ COM QUE A JANELA SEJA FECHADA
+def iexit():
+    janela.destroy()
+    return
+#LABEL DO BOTÃO "SAIR"
+botao1=Button(janela, width=25, text="SAIR",command=iexit,height=2, font="Arial, 12",bg='LightGoldenrod',activebackground='Yellow')
+botao1.place(x=566,y=550)
+
+#LABEL QUE DEFINE A FRASE DESCRITA ABAIXO DO BOTÃO DE INICIAR A MINERAÇÃO
+lb=Label(janela, text="AGUARDANDO",width=20,height=1, font="Arial, 10",bg='LightGoldenrod')
+lb.place(x=599,y=265)
+
+#======================== FUNÇAO QUE EXIBIRA O SALDO ======================
+def saldo():
+    #REQUISIÇAO JSON NA PAGINA WEB PARA CAPTURAR MEU SALDO
+    moeda= requests.get(f'{sitesaldo}');
+    moeda = moeda.json();
+    qtdmoeda = moeda["balance"];
+    #MENSAGEM EXIBIDA AO CLICAR NO BOTÃO "SALDO"
+    print("Seu Saldo atual e  de :" ,qtdmoeda , "moedas.");
+    return
+botao2=Button(janela, width=20, text="MEU SALDO",command=saldo,height=2, font="Arial, 14",bg='LightGoldenrod',activebackground='Yellow')
+botao2.place(x=570,y=350)
+
+
+
+#CHAMAMOSO METODO JANELA.MAINLOOP() PARA EXIBIRMOS A TELA.SEM O EVENT LOOP,A INTERFACE NÃO SERA EXIBIDA.
+janela.mainloop()
